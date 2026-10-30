@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Review demo</title>
+<style>
+:root{--bg:#f6efe6;--card:#fff;--ink:#2a1418;--mut:#7a6a66;--brand:#6b1226;--gold:#c9a24b;--line:#e8dccd;--chip:#f3e9dc;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1a0e11;--card:#26161a;--ink:#f5ebe0;--mut:#b8a39b;--brand:#e3b9c0;--gold:#d9b45c;--line:#3c2a2f;--chip:#34211f}}
+*{box-sizing:border-box}html{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Mukta","Segoe UI",system-ui,sans-serif;min-height:100%}
+.wrap{max-width:440px;margin:0 auto;padding:20px 16px 32px}
+.top{text-align:center;padding:8px 0 16px}
+.logo{width:64px;height:64px;border-radius:50%;margin:0 auto 10px;background:var(--brand);color:var(--gold);display:grid;place-items:center;font:700 28px Georgia,serif;border:2px solid var(--gold)}
+h1{font:700 22px/1.2 Georgia,"Times New Roman",serif;margin:0}
+.sub{color:var(--mut);font-size:14px;margin-top:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:14px}
+.lbl{font-weight:600;margin:0 0 10px}
+.stars{display:flex;gap:6px;justify-content:center}
+.stars button{background:none;border:0;font-size:40px;line-height:1;color:var(--line);cursor:pointer;padding:2px}
+.stars button.on{color:var(--gold)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
+.chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .chip.on{color:#2a1418}}
+.seg{display:flex;gap:6px;margin-bottom:12px}
+.btn{width:100%;border:0;border-radius:12px;padding:13px;font:inherit;font-weight:700;cursor:pointer;background:var(--brand);color:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn{color:#2a1418}}
+.btn.alt{background:var(--chip);color:var(--ink);border:1px solid var(--line);margin-top:8px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+textarea{width:100%;min-height:130px;border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;background:var(--bg);color:var(--ink);resize:vertical}
+.note{font-size:12.5px;color:var(--mut);margin-top:8px}
+.soc{display:flex;gap:10px;justify-content:center;margin-top:16px}
+.soc a{padding:8px 16px;border:1px solid var(--line);border-radius:999px;color:var(--ink);text-decoration:none;font-size:14px;background:var(--card)}
+button:focus-visible,a:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="logo">L</div>
+    <h1>Lakshmi Jewels</h1>
+    <div class="sub">Demo store · Varanasi</div>
+  </div>
+
+  <div class="card">
+    <p class="lbl" style="text-align:center">How was your visit?</p>
+    <div class="stars" id="stars" role="radiogroup" aria-label="Rating"></div>
+  </div>
+
+  <div class="card" id="step2" hidden>
+    <p class="lbl">What did you like?</p>
+    <div class="chips" id="chips"></div>
+    <p class="lbl" style="margin-top:16px">Language</p>
+    <div class="seg" id="langs"></div>
+    <button class="btn" id="gen">Write my review</button>
+  </div>
+
+  <div class="card" id="step3" hidden>
+    <p class="lbl">Your review (edit as you like)</p>
+    <textarea id="txt" aria-label="Review text"></textarea>
+    <a class="btn" id="post" href="#" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;margin-top:10px">Copy and open Google</a>
+    <button class="btn alt" id="regen">Write another version</button>
+    <p class="note">Your review is copied. Paste it on the Google page that opens.</p>
+  </div>
+
+  <div class="soc">
+    <a href="https://instagram.com/" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://facebook.com/" target="_blank" rel="noopener">Facebook</a>
+    <a href="https://example.com/" target="_blank" rel="noopener">Website</a>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- Per-business config: change these for each client ----
+var CFG = { name: "Lakshmi Jewels", placeId: "ChIJJZ0aahWx5zsRZgXLZ1ATRHY" };
+
+var TAGS = [
+  {k:"quality", t:"Quality"},
+  {k:"design", t:"Designs"},
+  {k:"staff", t:"Staff"},
+  {k:"price", t:"Pricing"},
+  {k:"service", t:"Service"},
+  {k:"trust", t:"Trust"}
+];
+var LANGS = [{k:"hi",t:"Hinglish"},{k:"en",t:"English"},{k:"dv",t:"हिन्दी"}];
+
+var PH = {
+  en:{quality:["the quality of the jewellery is excellent","the purity and finish are top class"],design:["a huge collection of beautiful designs","the designs are modern and elegant"],staff:["the staff was polite and patient","the team explained everything clearly"],price:["pricing and making charges are fair","great value for the price"],service:["the service was quick and smooth","billing and service were hassle free"],trust:["a store you can trust","transparent and honest dealing"]},
+  hi:{quality:["quality ekdum badhiya hai","gold ki purity aur finishing top class hai"],design:["designs ka collection bahut shandaar hai","naye aur sundar designs mile"],staff:["staff ka behaviour bahut achha tha","staff ne sab kuch achhe se samjhaya"],price:["price aur making charges sahi lage","paise ka poora value mila"],service:["service fast aur smooth thi","billing me koi jhanjhat nahi hua"],trust:["yahan bharosa karke aaram se kharid sakte hain","sab kuch transparent aur imaandaar hai"]},
+  dv:{quality:["गुणवत्ता बहुत बढ़िया है","सोने की शुद्धता और फिनिशिंग शानदार है"],design:["डिज़ाइनों का कलेक्शन बहुत शानदार है","नए और सुंदर डिज़ाइन मिले"],staff:["स्टाफ का व्यवहार बहुत अच्छा था","स्टाफ ने सब कुछ अच्छे से समझाया"],price:["दाम और मेकिंग चार्ज सही लगे","पैसे का पूरा मूल्य मिला"],service:["सर्विस तेज़ और आसान थी","बिलिंग में कोई परेशानी नहीं हुई"],trust:["यहाँ भरोसे के साथ खरीदारी कर सकते हैं","सब कुछ पारदर्शी और ईमानदार है"]}
+};
+var OPEN = {
+  5:{en:["Had a wonderful experience at "+CFG.name+".","Very happy with my visit to "+CFG.name+"."],hi:[CFG.name+" me bahut achha experience raha.",CFG.name+" aakar maza aa gaya."],dv:[CFG.name+" में बहुत अच्छा अनुभव रहा।",CFG.name+" आकर बहुत खुशी हुई।"]},
+  4:{en:["Good experience at "+CFG.name+"."],hi:[CFG.name+" me experience achha raha."],dv:[CFG.name+" में अनुभव अच्छा रहा।"]},
+  3:{en:["My visit to "+CFG.name+" was okay."],hi:[CFG.name+" ka experience theek-thaak raha."],dv:[CFG.name+" का अनुभव ठीक-ठाक रहा।"]},
+  2:{en:["My visit to "+CFG.name+" was below expectations."],hi:[CFG.name+" ka experience umeed se kam raha."],dv:[CFG.name+" का अनुभव उम्मीद से कम रहा।"]},
+  1:{en:["I was disappointed with my visit to "+CFG.name+"."],hi:[CFG.name+" me experience achha nahi raha."],dv:[CFG.name+" में अनुभव अच्छा नहीं रहा।"]}
+};
+var CLOSE = {
+  hi:{hi:["Zaroor dobara aaunga.","Sabko recommend karunga."],en:["Would visit again.","Recommended."],dv:["दोबारा ज़रूर आऊँगा।","सबको सुझाऊँगा।"]}
+};
+var CL = {
+  hi:{high:["Zaroor dobara aaunga.","Sabko recommend karunga."],mid:["Thoda aur behtar ho sakta hai."],low:["Umeed hai aage sudhar hoga."]},
+  en:{high:["Will definitely visit again.","Highly recommended."],mid:["There is some room to improve."],low:["I hope things improve."]},
+  dv:{high:["दोबारा ज़रूर आऊँगा।","सबको सुझाऊँगा।"],mid:["थोड़ा और बेहतर हो सकता है।"],low:["उम्मीद है आगे सुधार होगा।"]}
+};
+var JOIN = {en:"Also, ",hi:"Saath hi, ",dv:"साथ ही, "};
+var BIAS = {en:" in particular",hi:"",dv:""};
+
+var st = {rating:0, tags:{}, lang:"hi"};
+function $(id){return document.getElementById(id)}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function toast(m){var t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show")},1800)}
+
+function drawStars(){
+  var s=$("stars");s.innerHTML="";
+  for(var i=1;i<=5;i++){(function(i){
+    var b=document.createElement("button");
+    b.type="button";b.textContent="★";b.setAttribute("role","radio");
+    b.setAttribute("aria-label",i+" star"+(i>1?"s":""));
+    b.setAttribute("aria-checked",st.rating===i);
+    if(i<=st.rating)b.className="on";
+    b.onclick=function(){st.rating=i;drawStars();$("step2").hidden=false;};
+    s.appendChild(b);
+  })(i)}
+}
+function drawTags(){
+  var c=$("chips");c.innerHTML="";
+  TAGS.forEach(function(t){
+    var b=document.createElement("button");
+    b.type="button";b.className="chip"+(st.tags[t.k]?" on":"");b.textContent=t.t;
+    b.setAttribute("aria-pressed",!!st.tags[t.k]);
+    b.onclick=function(){st.tags[t.k]=!st.tags[t.k];drawTags();};
+    c.appendChild(b);
+  });
+}
+function drawLangs(){
+  var c=$("langs");c.innerHTML="";
+  LANGS.forEach(function(l){
+    var b=document.createElement("button");
+    b.type="button";b.className="chip"+(st.lang===l.k?" on":"");b.textContent=l.t;
+    b.onclick=function(){st.lang=l.k;drawLangs();};
+    c.appendChild(b);
+  });
+}
+function write(){
+  var L=st.lang,r=st.rating,keys=Object.keys(st.tags).filter(function(k){return st.tags[k]});
+  var parts=[pick(OPEN[r][L])];
+  if(keys.length){
+    var ph=keys.map(function(k){return pick(PH[L][k])});
+    var first=ph[0];
+    parts.push(first.charAt(0).toUpperCase()+first.slice(1)+".");
+    for(var i=1;i<ph.length;i++){parts.push(ph[i].charAt(0).toUpperCase()+ph[i].slice(1)+".")}
+  }
+  var bucket=r>=4?"high":(r===3?"mid":"low");
+  parts.push(pick(CL[L][bucket]));
+  $("txt").value=parts.join(" ");
+}
+$("gen").onclick=function(){write();$("step3").hidden=false;$("step3").scrollIntoView({behavior:"smooth",block:"start"});};
+$("regen").onclick=write;
+$("post").href="https://search.google.com/local/writereview?placeid="+encodeURIComponent(CFG.placeId);
+$("post").onclick=function(){
+  var ta=$("txt"),v=ta.value,ok=false;
+  try{ta.focus();ta.select();ok=document.execCommand("copy");}catch(e){}
+  if(!ok&&navigator.clipboard&&navigator.clipboard.writeText){try{navigator.clipboard.writeText(v);ok=true;}catch(e){}}
+  toast(ok?"Copied. Paste it on Google.":"Copy the text manually, then paste on Google.");
+};
+drawStars();drawTags();drawLangs();
+</script>
+</body>
+</html>
